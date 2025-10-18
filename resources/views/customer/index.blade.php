@@ -1,0 +1,111 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Customer List</h5>
+            <button class="btn btn-sm btn-primary" id="addCustomerBtn">+ Add Customer</button>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th width="5%">#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th width="15%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    @foreach ($customers as $i => $c)
+                        <tr data-id="{{ $c->id }}">
+                            <td>{{ $i + 1 }}</td>
+                            <td class="name">{{ $c->name }}</td>
+                            <td class="email">{{ $c->email }}</td>
+                            <td class="phone">{{ $c->phone }}</td>
+                            <td class="address">{{ $c->address }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning editCustomer">Edit</button>
+                                <button class="btn btn-sm btn-danger deleteCustomer">Delete</button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @include('components.modal_customer')
+@endsection
+
+@section('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(function() {
+            const modal = new bootstrap.Modal('#customerModal');
+
+            $('#addCustomerBtn').click(function() {
+                $('#customerForm')[0].reset();
+                $('#customer_id').val('');
+                modal.show();
+            });
+
+            $('#customerForm').submit(function(e) {
+                e.preventDefault();
+
+                const id = $('#customer_id').val();
+                const url = id ? `/customer/${id}` : '/customer';
+                const method = id ? 'PUT' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    data: {
+                        name: $('#name').val(),
+                        email: $('#email').val(),
+                        phone: $('#phone').val(),
+                        address: $('#address').val(),
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('Error: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+
+            $('.editCustomer').click(function() {
+                const tr = $(this).closest('tr');
+                $('#customer_id').val(tr.data('id'));
+                $('#name').val(tr.find('.name').text());
+                $('#email').val(tr.find('.email').text());
+                $('#phone').val(tr.find('.phone').text());
+                $('#address').val(tr.find('.address').text());
+                modal.show();
+            });
+
+            $('.deleteCustomer').click(function() {
+                if (!confirm('Are you sure want to delete this customer?')) return;
+                const id = $(this).closest('tr').data('id');
+
+                $.ajax({
+                    url: `/customer/${id}`,
+                    method: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function() {
+                        alert('Failed to delete');
+                    }
+                });
+            });
+        });
+    </script>
+@endsection
