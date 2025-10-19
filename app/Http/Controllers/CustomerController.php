@@ -10,12 +10,27 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->get('per_page', 10); // Default 10 items per page
-        $customers = Customer::latest()->paginate($perPage);
+        $search = $request->get('search');
+        $searchEmail = $request->get('search_email');
 
-        // Keep pagination parameters in the URL
+        $query = Customer::latest();
+
+        // Filter by name if search parameter exists
+        if ($search) {
+            $query->where('name', 'LIKE', '%' . $search . '%');
+        }
+
+        // Filter by email if search_email parameter exists
+        if ($searchEmail) {
+            $query->where('email', 'LIKE', '%' . $searchEmail . '%');
+        }
+
+        $customers = $query->paginate($perPage);
+
+        // Keep pagination and search parameters in the URL
         $customers->appends($request->query());
 
-        return view('customer.index', compact('customers'));
+        return view('customer.index', compact('customers', 'search', 'searchEmail'));
     }
 
     public function show($id)
