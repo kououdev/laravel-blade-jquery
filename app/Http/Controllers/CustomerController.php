@@ -13,6 +13,12 @@ class CustomerController extends Controller
         return view('customer.index', compact('customers'));
     }
 
+    public function show($id)
+    {
+        $customer = Customer::findOrFail($id);
+        return response()->json(['status' => 'success', 'customer' => $customer]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
