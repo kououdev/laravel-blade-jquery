@@ -80,13 +80,34 @@
             });
 
             $('.editCustomer').click(function() {
-                const tr = $(this).closest('tr');
-                $('#customer_id').val(tr.data('id'));
-                $('#name').val(tr.find('.name').text());
-                $('#email').val(tr.find('.email').text());
-                $('#phone').val(tr.find('.phone').text());
-                $('#address').val(tr.find('.address').text());
-                modal.show();
+                const id = $(this).closest('tr').data('id');
+                const $btn = $(this);
+
+                // disable button Edit dan kasih teks Loading di button
+                // agar mencegah multiple klik
+                $btn.prop('disabled', true).text('Loading...');
+
+                // ambil data customer dari API / DB
+                $.ajax({
+                    url: `/customer/${id}`,
+                    method: 'GET',
+                    success: function(response) {
+                        const customer = response.customer;
+                        $('#customer_id').val(customer.id);
+                        $('#name').val(customer.name);
+                        $('#email').val(customer.email);
+                        $('#phone').val(customer.phone || '');
+                        $('#address').val(customer.address || '');
+                        modal.show();
+                    },
+                    error: function() {
+                        showToast('Failed to load customer data.', 'danger');
+                    },
+                    complete: function() {
+                        // enable button Edit dan berikan text sebelumnya
+                        $btn.prop('disabled', false).text('Edit');
+                    }
+                });
             });
 
             let deleteId = null;
