@@ -38,6 +38,8 @@
     </div>
 
     @include('components.modal_customer')
+    @include('components.modal_delete')
+    @include('components.toast_message')
 @endsection
 
 @section('scripts')
@@ -87,21 +89,29 @@
                 modal.show();
             });
 
+            let deleteId = null;
             $('.deleteCustomer').click(function() {
-                if (!confirm('Are you sure want to delete this customer?')) return;
-                const id = $(this).closest('tr').data('id');
+                deleteId = $(this).closest('tr').data('id');
+                $('#confirmDeleteModal').modal('show');
+            });
+
+            $('#btnConfirmDelete').click(function() {
+                if (!deleteId) return;
 
                 $.ajax({
-                    url: `/customer/${id}`,
+                    url: `/customer/${deleteId}`,
                     method: 'DELETE',
                     data: {
                         _token: '{{ csrf_token() }}'
                     },
                     success: function() {
+                        $('#confirmDeleteModal').modal('hide');
                         location.reload();
+                        showToast('Data berhasil dihapus.', 'success');
                     },
                     error: function() {
-                        alert('Failed to delete');
+                        $('#confirmDeleteModal').modal('hide');
+                        showToast('Gagal menghapus data.', 'danger');
                     }
                 });
             });
