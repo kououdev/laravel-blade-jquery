@@ -7,9 +7,14 @@ use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::latest()->get();
+        $perPage = $request->get('per_page', 10); // Default 10 items per page
+        $customers = Customer::latest()->paginate($perPage);
+
+        // Keep pagination parameters in the URL
+        $customers->appends($request->query());
+
         return view('customer.index', compact('customers'));
     }
 
