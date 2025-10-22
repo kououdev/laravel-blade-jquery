@@ -124,12 +124,12 @@
 @section('scripts')
     <script>
         $(function() {
-            const modal = new bootstrap.Modal('#customerModal');
+            // jQuery way - no need to initialize modal instances
 
             $('#addCustomerBtn').click(function() {
                 $('#customerForm')[0].reset();
                 $('#customer_id').val('');
-                modal.show();
+                $('#customerModal').modal('show');
             });
 
             $('#customerForm').submit(function(e) {
@@ -150,6 +150,7 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function() {
+                        $('#customerModal').modal('hide');
                         location.reload();
                     },
                     error: function(xhr) {
@@ -158,7 +159,8 @@
                 });
             });
 
-            $('.editCustomer').click(function() {
+            // Use event delegation for dynamically loaded content
+            $(document).on('click', '.editCustomer', function() {
                 const id = $(this).closest('tr').data('id');
                 const $btn = $(this);
 
@@ -177,7 +179,7 @@
                         $('#email').val(customer.email);
                         $('#phone').val(customer.phone || '');
                         $('#address').val(customer.address || '');
-                        modal.show();
+                        $('#customerModal').modal('show');
                     },
                     error: function() {
                         showToast('Failed to load customer data.', 'danger');
@@ -190,7 +192,7 @@
             });
 
             let deleteId = null;
-            $('.deleteCustomer').click(function() {
+            $(document).on('click', '.deleteCustomer', function() {
                 deleteId = $(this).closest('tr').data('id');
                 $('#confirmDeleteModal').modal('show');
             });
@@ -228,6 +230,16 @@
                 url.searchParams.set('per_page', perPage);
                 url.searchParams.delete('page'); // Reset to first page
                 window.location.href = url.toString();
+            });
+
+            // jQuery modal events
+            $('#customerModal').on('hidden.bs.modal', function() {
+                $('#customerForm')[0].reset();
+                $('#customer_id').val('');
+            });
+
+            $('#confirmDeleteModal').on('hidden.bs.modal', function() {
+                deleteId = null;
             });
         });
     </script>
