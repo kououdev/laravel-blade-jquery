@@ -4,7 +4,9 @@
             <form id="customerForm">
                 <div class="modal-header">
                     <h5 class="modal-title">Customer Form</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="close" onclick="$('#customerModal').modal('hide')" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="customer_id">
@@ -26,7 +28,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="$('#customerModal').modal('hide')">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
             </form>

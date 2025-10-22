@@ -124,10 +124,24 @@
 @section('scripts')
     <script>
         $(function() {
-            // jQuery way - no need to initialize modal instances
+            // Pure jQuery Modal - No Bootstrap Modal API to avoid conflicts
+
+            // Enable modal close on ESC key and backdrop click
+            $(document).on('keyup', function(e) {
+                if (e.key === 'Escape') {
+                    $('.modal.show').modal('hide');
+                }
+            });
+
+            // Close modal when clicking backdrop
+            $('.modal').on('click', function(e) {
+                if (e.target === this) {
+                    $(this).modal('hide');
+                }
+            });
 
             $('#addCustomerBtn').click(function() {
-                $('#customerForm')[0].reset();
+                $('#customerForm').trigger('reset');
                 $('#customer_id').val('');
                 $('#customerModal').modal('show');
             });
@@ -135,63 +149,66 @@
             $('#customerForm').submit(function(e) {
                 e.preventDefault();
 
-                const id = $('#customer_id').val();
-                const url = id ? `/customer/${id}` : '/customer';
-                const method = id ? 'PUT' : 'POST';
+                var $form = $(this);
+                var id = $('#customer_id').val();
+                var formData = $form.serialize();
 
-                $.ajax({
-                    url: url,
-                    method: method,
-                    data: {
-                        name: $('#name').val(),
-                        email: $('#email').val(),
-                        phone: $('#phone').val(),
-                        address: $('#address').val(),
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function() {
-                        $('#customerModal').modal('hide');
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert('Error: ' + xhr.responseJSON.message);
-                    }
-                });
+                if (id) {
+                    // Update existing customer
+                    $.ajax({
+                            url: '/customer/' + id,
+                            type: 'PUT',
+                            data: formData
+                        })
+                        .done(function() {
+                            $('#customerModal').modal('hide');
+                            location.reload();
+                        })
+                        .fail(function(xhr) {
+                            alert('Error: ' + xhr.responseJSON.message);
+                        });
+                } else {
+                    // Create new customer
+                    $.post('/customer', formData)
+                        .done(function() {
+                            $('#customerModal').modal('hide');
+                            location.reload();
+                        })
+                        .fail(function(xhr) {
+                            alert('Error: ' + xhr.responseJSON.message);
+                        });
+                }
             });
 
-            // Use event delegation for dynamically loaded content
+            // Edit Customer - Event delegation with jQuery modal
             $(document).on('click', '.editCustomer', function() {
-                const id = $(this).closest('tr').data('id');
-                const $btn = $(this);
+                var customerId = $(this).closest('tr').data('id');
+                var $btn = $(this);
 
-                // disable button Edit dan kasih teks Loading di button
-                // agar mencegah multiple klik
+                // Disable button and show loading
                 $btn.prop('disabled', true).text('Loading...');
 
-                // ambil data customer dari API / DB
-                $.ajax({
-                    url: `/customer/${id}`,
-                    method: 'GET',
-                    success: function(response) {
-                        const customer = response.customer;
+                // Load customer data using jQuery
+                $.get('/customer/' + customerId)
+                    .done(function(response) {
+                        var customer = response.customer;
                         $('#customer_id').val(customer.id);
                         $('#name').val(customer.name);
                         $('#email').val(customer.email);
                         $('#phone').val(customer.phone || '');
                         $('#address').val(customer.address || '');
-                        $('#customerModal').modal('show');
-                    },
-                    error: function() {
-                        showToast('Failed to load customer data.', 'danger');
-                    },
-                    complete: function() {
-                        // enable button Edit dan berikan text sebelumnya
+                        $('#customerModal').modal('show'); // jQuery modal
+                    })
+                    .fail(function() {
+                        alert('Failed to load customer data');
+                    })
+                    .always(function() {
                         $btn.prop('disabled', false).text('Edit');
-                    }
-                });
+                    });
             });
 
-            let deleteId = null;
+            // Delete Customer - Event delegation 
+            var deleteId = null;
             $(document).on('click', '.deleteCustomer', function() {
                 deleteId = $(this).closest('tr').data('id');
                 $('#confirmDeleteModal').modal('show');
@@ -201,21 +218,20 @@
                 if (!deleteId) return;
 
                 $.ajax({
-                    url: `/customer/${deleteId}`,
-                    method: 'DELETE',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function() {
+                        url: '/customer/' + deleteId,
+                        type: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        }
+                    })
+                    .done(function() {
                         $('#confirmDeleteModal').modal('hide');
                         location.reload();
-                        showToast('Data berhasil dihapus.', 'success');
-                    },
-                    error: function() {
+                    })
+                    .fail(function() {
                         $('#confirmDeleteModal').modal('hide');
-                        showToast('Gagal menghapus data.', 'danger');
-                    }
-                });
+                        alert('Failed to delete customer');
+                    });
             });
 
             // Handle per page change
@@ -230,16 +246,6 @@
                 url.searchParams.set('per_page', perPage);
                 url.searchParams.delete('page'); // Reset to first page
                 window.location.href = url.toString();
-            });
-
-            // jQuery modal events
-            $('#customerModal').on('hidden.bs.modal', function() {
-                $('#customerForm')[0].reset();
-                $('#customer_id').val('');
-            });
-
-            $('#confirmDeleteModal').on('hidden.bs.modal', function() {
-                deleteId = null;
             });
         });
     </script>
