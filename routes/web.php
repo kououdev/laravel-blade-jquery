@@ -2,13 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', [CustomerController::class, 'index'])->name('customer.index');
+Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
+
+Route::get('/customer', [CustomerController::class, 'index'])->name('customer.index');
 Route::get('/customer/{id}', [CustomerController::class, 'show'])->name('customer.show');
 Route::post('/customer', [CustomerController::class, 'store'])->name('customer.store');
 Route::put('/customer/{id}', [CustomerController::class, 'update'])->name('customer.update');
